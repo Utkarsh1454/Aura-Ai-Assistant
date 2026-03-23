@@ -1,25 +1,33 @@
 # ─────────────────────────────────────────────────────────────
 # Aura AI – Mind-Body Connection Assistant (UI ENHANCED)
 # ─────────────────────────────────────────────────────────────
-import json
-import os
-import sys
-import requests
 import streamlit as st
-from datetime import datetime
 
-# Ensure the root directory is in the path for internal imports
-sys.path.append(os.getcwd())
-
-from audio_recorder_streamlit import audio_recorder
-from backend.config import APP_NAME, APP_TAGLINE
-
+# MUST BE THE FIRST STREAMLIT COMMAND
 st.set_page_config(
     page_title="Aura AI Assistant",
     page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+import json
+import os
+import sys
+import requests
+from datetime import datetime
+
+# Ensure the root directory is in the path for internal imports
+sys.path.append(os.getcwd())
+
+# Lazy-load backend config to prevent early crashes
+try:
+    from backend.config import APP_NAME, APP_TAGLINE
+except ImportError:
+    APP_NAME = "Aura AI"
+    APP_TAGLINE = "Mind-Body Connection Assistant"
+
+from audio_recorder_streamlit import audio_recorder
 
 # ── Configuration & Cloud Connectivity ────────────────────────
 # Check for environment variable or Streamlit secret for public deployment
@@ -125,9 +133,7 @@ div[data-testid="metric-container"] {
 </style>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# HEADER
-# ─────────────────────────────────────────────────────────────
+# ── Header ───────────────────────────────────────────────────
 st.markdown(f"""
 <div class="aura-header">
     <div class="aura-title">{APP_NAME}</div>
@@ -135,168 +141,102 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# BACKEND CHECK & SANDBOX FALLBACK
-# ─────────────────────────────────────────────────────────────
+# ── Backend Check & Sandbox Fallsback ────────────────────────
 @st.cache_data(ttl=60)
 def check_backend():
     try:
-        return requests.get(f"{API_BASE}/", timeout=2).status_code == 200
+        # Faster timeout for cloud detection
+        return requests.get(f"{API_BASE}/", timeout=1.5).status_code == 200
     except:
         return False
 
-# Detect if we are in public "Aura Field" (Sandbox)
 backend_up = check_backend()
 if not backend_up:
-    st.warning("⚠️ Aura Core is currently offline. Entering **Demo Sandbox Mode** for visual preview.")
+    st.warning("⚠️ Aura Core Offline. Entering **Demo Sandbox Mode**.")
     st.session_state.sandbox_mode = True
 else:
     st.session_state.sandbox_mode = False
 
-# ─────────────────────────────────────────────────────────────
-# MAIN UI
-# ─────────────────────────────────────────────────────────────
+# ── Layout ───────────────────────────────────────────────────
 col1, col2 = st.columns(2)
 
-# ── LEFT PANEL
 with col1:
     st.markdown('<div class="glass">', unsafe_allow_html=True)
     st.subheader("📸 Presence Input")
-
     img_input = st.camera_input("Capture")
     if img_input is None:
         img_input = st.file_uploader("Upload Image", type=["jpg","png"])
 
     st.markdown("### 🎤 Voice")
     audio = audio_recorder()
-
     if audio:
         st.audio(audio)
 
     btn = st.button("Analyze", disabled=not(img_input and audio))
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ── RIGHT PANEL
 with col2:
     st.markdown('<div class="glass">', unsafe_allow_html=True)
     st.subheader("🔮 Aura Insight")
 
     if btn:
         status_msg = st.info("🧬 Calibrating Aura...")
-        
-        # Define img_bytes for processing
         img_bytes = img_input.getvalue() if hasattr(img_input, "getvalue") else img_input.read()
         
-        # --- Sandbox Logic ---
         if st.session_state.get("sandbox_mode"):
-            import time, random
-            time.sleep(1.5)
+            import time
+            time.sleep(1.2)
             status_msg.empty()
-            
-            # Simulated Meta
             sim_e = st.session_state.get("mock_choice", "happy")
-            face_e, voice_e, final_e = sim_e, sim_e, sim_e
-            
             c1, c2, c3 = st.columns(3)
-            c1.metric("Visual", face_e.capitalize())
-            c2.metric("Vocal", voice_e.capitalize())
-            c3.metric("State", final_e.capitalize())
-            
-            st.markdown(f'<div style="margin:1rem 0"><span class="emotion-pill {final_e}">{final_e.upper()} (SANDBOX)</span></div>', unsafe_allow_html=True)
-            
-            res_box = st.empty()
-            full_res = f"The Aura Field perceives a {final_e} resonance. In this Sandbox mode, we simulate the soul's journey through digital mirrors."
-            res_box.markdown(f'<div class="response-box">{full_res}</div>', unsafe_allow_html=True)
-            
+            c1.metric("Visual", sim_e.capitalize())
+            c2.metric("Vocal", sim_e.capitalize())
+            c3.metric("State", sim_e.capitalize())
+            st.markdown(f'<div style="margin:1rem 0"><span class="emotion-pill {sim_e}">{sim_e.upper()} (SANDBOX)</span></div>', unsafe_allow_html=True)
+            full_res = f"The Aura Field perceives a {sim_e} resonance. Cloud Sandbox active."
+            st.markdown(f'<div class="response-box">{full_res}</div>', unsafe_allow_html=True)
             if "history" not in st.session_state: st.session_state.history = []
-            st.session_state.history.append({
-                "face": face_e, "voice": voice_e, "final": final_e, 
-                "response": full_res, "timestamp": datetime.now().strftime("%H:%M:%S")
-            })
+            st.session_state.history.append({"face": sim_e, "voice": sim_e, "final": sim_e, "response": full_res, "timestamp": datetime.now().strftime("%H:%M:%S")})
             st.stop()
-        # --- End Sandbox ---
 
-        files = {
-            "frame": ("frame.jpg", img_bytes, "image/jpeg"),
-            "audio": ("audio.wav", audio, "audio.wav")
-        }
-
-        # Prepare Simulation Params
-        params = {}
-        if st.session_state.get("mock_enable"):
-            params["mock_emotion"] = st.session_state.get("mock_choice")
+        files = {"frame": ("frame.jpg", img_bytes, "image/jpeg"), "audio": ("audio.wav", audio, "audio.wav")}
+        params = {"mock_emotion": st.session_state.get("mock_choice")} if st.session_state.get("mock_enable") else {}
 
         try:
-            # Use the streaming endpoint for a premium "Aura" feel
-            with requests.post(f"{API_BASE}/api/analyze/stream", params=params, 
-                               files=files, stream=True, timeout=90) as resp:
+            with requests.post(f"{API_BASE}/api/analyze/stream", params=params, files=files, stream=True, timeout=90) as resp:
                 resp.raise_for_status()
                 status_msg.empty()
-                
-                metrics_ph  = st.empty()
-                badge_ph    = st.empty()
-                response_ph = st.empty()
-                
-                face_e = voice_e = final_e = "..."
-                response_text = ""
+                metrics_ph, badge_ph, response_ph = st.empty(), st.empty(), st.empty()
+                face_e, voice_e, final_e, response_text = "...", "...", "...", ""
 
                 for raw in resp.iter_lines():
                     if not raw: continue
                     chunk = json.loads(raw)
-                    kind  = chunk.get("type")
-
-                    if kind == "meta":
+                    if chunk.get("type") == "meta":
                         face_e, voice_e, final_e = chunk.get("face"), chunk.get("voice"), chunk.get("final")
-
                         with metrics_ph.container():
                             m1, m2, m3 = st.columns(3)
                             m1.metric("Visual", face_e.capitalize())
                             m2.metric("Vocal", voice_e.capitalize())
                             m3.metric("State", final_e.capitalize())
-
-                        badge_ph.markdown(
-                            f'<div style="margin:1rem 0">'
-                            f'<span class="emotion-pill {final_e}">{final_e.upper()}</span>'
-                            f'</div>',
-                            unsafe_allow_html=True,
-                        )
-                        response_ph.markdown('<div class="response-box">Aura is perceiving...</div>', 
-                                            unsafe_allow_html=True)
-
-                    elif kind == "token":
+                        badge_ph.markdown(f'<div style="margin:1rem 0"><span class="emotion-pill {final_e}">{final_e.upper()}</span></div>', unsafe_allow_html=True)
+                    elif chunk.get("type") == "token":
                         response_text += chunk.get("text", "")
-                        response_ph.markdown(f'<div class="response-box">{response_text}</div>', 
-                                            unsafe_allow_html=True)
+                        response_ph.markdown(f'<div class="response-box">{response_text}</div>', unsafe_allow_html=True)
 
-                # Update session history
                 if "history" not in st.session_state: st.session_state.history = []
-                st.session_state.history.append({
-                    "face": face_e, 
-                    "voice": voice_e, 
-                    "final": final_e, 
-                    "response": response_text,
-                    "timestamp": datetime.now().strftime("%H:%M:%S")
-                })
-
+                st.session_state.history.append({"face": face_e, "voice": voice_e, "final": final_e, "response": response_text, "timestamp": datetime.now().strftime("%H:%M:%S")})
         except Exception as e:
-            st.error(f"Insight calibration failed: {e}")
-
+            st.error(f"Insight failed: {e}")
     else:
-        st.info("Align your visual and vocal presence to begin the analysis.")
-
+        st.info("Align your presence to begin.")
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────
-# SIDEBAR
-# ─────────────────────────────────────────────────────────────
 with st.sidebar:
     st.title("⚙️ Controls")
-
     st.toggle("Simulation Mode", key="mock_enable")
     st.selectbox("Emotion", ["happy","sad","stress","neutral","fatigue"], key="mock_choice")
-
     st.markdown("---")
-
     st.subheader("📜 Journey History")
     if "history" in st.session_state and st.session_state.history:
         for entry in reversed(st.session_state.history[-5:]):
@@ -304,4 +244,4 @@ with st.sidebar:
                 st.caption(f"Visual: {entry['face']} | Vocal: {entry['voice']}")
                 st.write(entry['response'])
     else:
-        st.caption("No entries found in your current session.")
+        st.caption("No entries yet.")
