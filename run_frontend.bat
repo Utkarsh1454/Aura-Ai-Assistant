@@ -1,0 +1,3 @@
+@echo off
+echo Starting MAITRI Frontend...
+streamlit run frontend/app.py

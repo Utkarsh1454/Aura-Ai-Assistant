@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Trained model weights (large files – store in DVC or drive)
+ai/face/model.pth
+ai/voice/model.pth
+
+# Datasets (too large for git)
+data/face_dataset/*
+data/voice_dataset/*
+!data/face_dataset/.gitkeep
+!data/voice_dataset/.gitkeep
+
+# Logs
+*.log
+data/emotion_log.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,4 @@
+#!/bin/bash
+# Run MAITRI FastAPI Backend
+echo "Starting MAITRI Backend..."
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000

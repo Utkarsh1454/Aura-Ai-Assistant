@@ -1,0 +1,10 @@
+# Place FER2013 emotion-labelled images here.
+# Folder structure:
+#   face_dataset/
+#     happy/    *.jpg
+#     sad/      *.jpg
+#     stress/   *.jpg
+#     neutral/  *.jpg
+#     fatigue/  *.jpg
+#
+# Dataset source: https://www.kaggle.com/datasets/msambare/fer2013
