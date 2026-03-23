@@ -2,6 +2,7 @@
 # Aura AI – Mind-Body Connection Assistant (UI ENHANCED)
 # ─────────────────────────────────────────────────────────────
 import json
+import os
 import requests
 import streamlit as st
 from datetime import datetime
@@ -15,7 +16,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-API_BASE = "http://localhost:8000"
+# ── Configuration & Cloud Connectivity ────────────────────────
+# Check for environment variable or Streamlit secret for public deployment
+API_BASE = st.secrets.get("API_BASE", os.environ.get("ST_API_BASE", "http://localhost:8000"))
 
 # ─────────────────────────────────────────────────────────────
 # 🌌 ULTRA MODERN UI CSS
@@ -125,18 +128,22 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────
-# BACKEND CHECK
+# BACKEND CHECK & SANDBOX FALLBACK
 # ─────────────────────────────────────────────────────────────
 @st.cache_data(ttl=60)
 def check_backend():
     try:
-        return requests.get(f"{API_BASE}/", timeout=3).status_code == 200
+        return requests.get(f"{API_BASE}/", timeout=2).status_code == 200
     except:
         return False
 
-if not check_backend():
-    st.error("⚠️ Backend Offline")
-    st.stop()
+# Detect if we are in public "Aura Field" (Sandbox)
+backend_up = check_backend()
+if not backend_up:
+    st.warning("⚠️ Aura Core is currently offline. Entering **Demo Sandbox Mode** for visual preview.")
+    st.session_state.sandbox_mode = True
+else:
+    st.session_state.sandbox_mode = False
 
 # ─────────────────────────────────────────────────────────────
 # MAIN UI
@@ -172,6 +179,35 @@ with col2:
         # Define img_bytes for processing
         img_bytes = img_input.getvalue() if hasattr(img_input, "getvalue") else img_input.read()
         
+        # --- Sandbox Logic ---
+        if st.session_state.get("sandbox_mode"):
+            import time, random
+            time.sleep(1.5)
+            status_msg.empty()
+            
+            # Simulated Meta
+            sim_e = st.session_state.get("mock_choice", "happy")
+            face_e, voice_e, final_e = sim_e, sim_e, sim_e
+            
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Visual", face_e.capitalize())
+            c2.metric("Vocal", voice_e.capitalize())
+            c3.metric("State", final_e.capitalize())
+            
+            st.markdown(f'<div style="margin:1rem 0"><span class="emotion-pill {final_e}">{final_e.upper()} (SANDBOX)</span></div>', unsafe_allow_html=True)
+            
+            res_box = st.empty()
+            full_res = f"The Aura Field perceives a {final_e} resonance. In this Sandbox mode, we simulate the soul's journey through digital mirrors."
+            res_box.markdown(f'<div class="response-box">{full_res}</div>', unsafe_allow_html=True)
+            
+            if "history" not in st.session_state: st.session_state.history = []
+            st.session_state.history.append({
+                "face": face_e, "voice": voice_e, "final": final_e, 
+                "response": full_res, "timestamp": datetime.now().strftime("%H:%M:%S")
+            })
+            st.stop()
+        # --- End Sandbox ---
+
         files = {
             "frame": ("frame.jpg", img_bytes, "image/jpeg"),
             "audio": ("audio.wav", audio, "audio.wav")
