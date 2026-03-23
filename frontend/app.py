@@ -3,9 +3,14 @@
 # ─────────────────────────────────────────────────────────────
 import json
 import os
+import sys
 import requests
 import streamlit as st
 from datetime import datetime
+
+# Ensure the root directory is in the path for internal imports
+sys.path.append(os.getcwd())
+
 from audio_recorder_streamlit import audio_recorder
 from backend.config import APP_NAME, APP_TAGLINE
 
@@ -18,7 +23,10 @@ st.set_page_config(
 
 # ── Configuration & Cloud Connectivity ────────────────────────
 # Check for environment variable or Streamlit secret for public deployment
-API_BASE = st.secrets.get("API_BASE", os.environ.get("ST_API_BASE", "http://localhost:8000"))
+try:
+    API_BASE = st.secrets.get("API_BASE", os.environ.get("ST_API_BASE", "http://localhost:8000"))
+except:
+    API_BASE = os.environ.get("ST_API_BASE", "http://localhost:8000")
 
 # ─────────────────────────────────────────────────────────────
 # 🌌 ULTRA MODERN UI CSS
