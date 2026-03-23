@@ -85,5 +85,4 @@ Pre-configured for seamless hosting:
 - **GitHub Ready**: `.gitignore` optimized to keep your repository clean of heavy binary blobs.
 
 ---
-
-[Implementation Plan](file:///C:/Users/Himanshu/.gemini/antigravity/brain/d7392ed3-520f-444a-9899-9de3b7eddc01/implementation_plan.md) | [Walkthrough](file:///C:/Users/Himanshu/.gemini/antigravity/brain/d7392ed3-520f-444a-9899-9de3b7eddc01/walkthrough.md) | [Final Task](file:///C:/Users/Himanshu/.gemini/antigravity/brain/d7392ed3-520f-444a-9899-9de3b7eddc01/task.md)
+*Aura AI – Built for mental resilience and emotional intelligence.*
